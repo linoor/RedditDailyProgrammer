@@ -35,7 +35,7 @@ overlap a b = start a < end b && start b < end a
 
 main :: IO ()
 main = do
-  input <- readFile "folks.data"
+  input <- readFile "wonder.data"
   let alltvshows = map getTVShow . tail $ lines input
   let mustSeeShowName = head $ lines input
   let mustSeeShow = head $ filter (\tvshow -> name tvshow == mustSeeShowName) alltvshows
@@ -52,11 +52,13 @@ main = do
         -- sort by ending time
         sortBy (comparing end) $ 
         -- add the must see show
-        mustSeeShow : (foldl helper [] $
+        mustSeeShow :
+        -- add the show if it does not overlap with the previous one
+        (foldl helper [] $
         -- sort by ending time
         sortBy (comparing end) $
         -- remove the shows that overlap with the must see show
-        filter (\tvshow -> not (overlap mustSeeShow tvshow)) alltvshows) where
+        filter (not . overlap mustSeeShow) alltvshows) where
             helper [] tvshow                = [tvshow]
             helper acc tvshow
                 | overlap (last acc) tvshow = acc
