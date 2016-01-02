@@ -52,18 +52,15 @@ main = do
         -- sort by ending time
         sortBy (comparing end) $ 
         -- add the must see show
-        mustSeeShow :
-        -- add to the acc only if the shows are not overlapping
-        foldl helper [] 
+        mustSeeShow : (foldl helper [] $
         -- sort by ending time
-        (sortBy (comparing end) alltvshows) where
-            helper [] tvshow
-              | overlap tvshow mustSeeShow = []
-              | otherwise = [tvshow]
+        sortBy (comparing end) $
+        -- remove the shows that overlap with the must see show
+        filter (\tvshow -> not (overlap mustSeeShow tvshow)) alltvshows) where
+            helper [] tvshow                = [tvshow]
             helper acc tvshow
-              | overlap (last acc) tvshow ||
-                overlap (last acc) mustSeeShow = acc
-              | otherwise                 = acc ++ [tvshow]
+                | overlap (last acc) tvshow = acc
+                | otherwise                 = acc ++ [tvshow]
   print $ length alltvshows
   mapM_ print maxtvshows
   putStr "max number of tv shows to record: "
