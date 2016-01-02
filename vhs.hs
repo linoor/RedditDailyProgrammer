@@ -35,14 +35,40 @@ overlap a b = start a < end b && start b < end a
 
 main :: IO ()
 main = do
-  input <- readFile "last.data"
-  let mustSeeShow = head $ lines input
+  input <- readFile "folks.data"
   let alltvshows = map getTVShow . tail $ lines input
-  let maxtvshows = maximumBy (comparing length) $
-                   --map (nubBy overlap) $
-                   filter (\subseq -> mustSeeShow `elem` map name subseq) $ 
-                   subsequences alltvshows
+  let mustSeeShowName = head $ lines input
+  let mustSeeShow = head $ filter (\tvshow -> name tvshow == mustSeeShowName) alltvshows
+  let maxtvshows =
+        -- add to the acc only if the shows are not overlapping
+        foldl helper [] $
+        -- sort by ending time
+        sortBy (comparing end) alltvshows where
+            helper [] tvshow                = [tvshow]
+            helper acc tvshow
+                | overlap (last acc) tvshow = acc
+                | otherwise                 = acc ++ [tvshow]
+  let withMustSee =
+        -- sort by ending time
+        sortBy (comparing end) $ 
+        -- add the must see show
+        mustSeeShow :
+        -- add to the acc only if the shows are not overlapping
+        foldl helper [] 
+        -- sort by ending time
+        (sortBy (comparing end) alltvshows) where
+            helper [] tvshow
+              | overlap tvshow mustSeeShow = []
+              | otherwise = [tvshow]
+            helper acc tvshow
+              | overlap (last acc) tvshow ||
+                overlap (last acc) mustSeeShow = acc
+              | otherwise                 = acc ++ [tvshow]
   print $ length alltvshows
   mapM_ print maxtvshows
   putStr "max number of tv shows to record: "
   print $ length maxtvshows
+  putStrLn "-----"
+  mapM_ print withMustSee
+  putStr "max number of tv shows to record (with the must see show included): "
+  print $ length withMustSee
